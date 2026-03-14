@@ -531,6 +531,10 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
   const [coworkMemoryEditingId, setCoworkMemoryEditingId] = useState<string | null>(null);
   const [coworkMemoryDraftText, setCoworkMemoryDraftText] = useState<string>('');
   const [showMemoryModal, setShowMemoryModal] = useState<boolean>(false);
+  const [bootstrapIdentity, setBootstrapIdentity] = useState<string>('');
+  const [bootstrapUser, setBootstrapUser] = useState<string>('');
+  const [bootstrapSoul, setBootstrapSoul] = useState<string>('');
+  const [bootstrapLoaded, setBootstrapLoaded] = useState<boolean>(false);
   const [openClawEngineStatus, setOpenClawEngineStatus] = useState<OpenClawEngineStatus | null>(null);
 
   useEffect(() => {
@@ -991,7 +995,20 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
   useEffect(() => {
     if (activeTab !== 'coworkMemory') return;
     void loadCoworkMemoryData();
-  }, [activeTab, loadCoworkMemoryData]);
+    if (!bootstrapLoaded) {
+      void (async () => {
+        const [identity, user, soul] = await Promise.all([
+          coworkService.readBootstrapFile('IDENTITY.md'),
+          coworkService.readBootstrapFile('USER.md'),
+          coworkService.readBootstrapFile('SOUL.md'),
+        ]);
+        setBootstrapIdentity(identity);
+        setBootstrapUser(user);
+        setBootstrapSoul(soul);
+        setBootstrapLoaded(true);
+      })();
+    }
+  }, [activeTab, loadCoworkMemoryData, bootstrapLoaded]);
 
   const resetCoworkMemoryEditor = () => {
     setCoworkMemoryEditingId(null);
@@ -1186,6 +1203,18 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
         });
         if (!updated) {
           throw new Error(i18nService.t('coworkConfigSaveFailed'));
+        }
+      }
+
+      // Save bootstrap files (IDENTITY.md, USER.md, SOUL.md) only if loaded
+      if (bootstrapLoaded) {
+        const results = await Promise.all([
+          coworkService.writeBootstrapFile('IDENTITY.md', bootstrapIdentity),
+          coworkService.writeBootstrapFile('USER.md', bootstrapUser),
+          coworkService.writeBootstrapFile('SOUL.md', bootstrapSoul),
+        ]);
+        if (results.some(r => !r)) {
+          throw new Error(i18nService.t('coworkBootstrapSaveFailed'));
         }
       }
 
@@ -2084,26 +2113,54 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
       case 'coworkMemory':
         return (
           <div className="space-y-6">
+            {/* Section 1: Agent Settings (IDENTITY.md + SOUL.md) */}
+            <div className="space-y-4 rounded-xl border px-4 py-4 dark:border-claude-darkBorder border-claude-border">
+              <div className="text-sm font-medium dark:text-claude-darkText text-claude-text">
+                {i18nService.t('coworkBootstrapAgentSectionTitle')}
+              </div>
+              {[
+                { filename: 'IDENTITY.md', titleKey: 'coworkBootstrapIdentityTitle', hintKey: 'coworkBootstrapIdentityHint', value: bootstrapIdentity, setter: setBootstrapIdentity },
+                { filename: 'SOUL.md', titleKey: 'coworkBootstrapSoulTitle', hintKey: 'coworkBootstrapSoulHint', value: bootstrapSoul, setter: setBootstrapSoul },
+              ].map(({ filename, titleKey, hintKey, value, setter }) => (
+                <div key={filename} className="space-y-2">
+                  <div className="text-xs font-medium dark:text-claude-darkTextSecondary text-claude-textSecondary">
+                    {i18nService.t(titleKey)}
+                    <span className="ml-1.5 font-normal opacity-70">— {i18nService.t(hintKey)}</span>
+                  </div>
+                  <textarea
+                    value={value}
+                    onChange={(e) => setter(e.target.value)}
+                    rows={3}
+                    className="w-full rounded-lg border px-3 py-2 text-sm dark:border-claude-darkBorder border-claude-border dark:bg-claude-darkSurface bg-claude-surface dark:text-claude-darkText text-claude-text resize-y"
+                    placeholder={i18nService.t(hintKey)}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Section 2: User Profile (USER.md) */}
+            <div className="space-y-3 rounded-xl border px-4 py-4 dark:border-claude-darkBorder border-claude-border">
+              <div className="text-sm font-medium dark:text-claude-darkText text-claude-text">
+                {i18nService.t('coworkBootstrapUserTitle')}
+              </div>
+              <div className="text-xs dark:text-claude-darkTextSecondary text-claude-textSecondary">
+                {i18nService.t('coworkBootstrapUserHint')}
+              </div>
+              <textarea
+                value={bootstrapUser}
+                onChange={(e) => setBootstrapUser(e.target.value)}
+                rows={3}
+                className="w-full rounded-lg border px-3 py-2 text-sm dark:border-claude-darkBorder border-claude-border dark:bg-claude-darkSurface bg-claude-surface dark:text-claude-darkText text-claude-text resize-y"
+                placeholder={i18nService.t('coworkBootstrapUserHint')}
+              />
+            </div>
+
+            {/* Section 3: Long-term Memory (MEMORY.md) */}
             <div className="space-y-3 rounded-xl border px-4 py-4 dark:border-claude-darkBorder border-claude-border">
               <div className="text-sm font-medium dark:text-claude-darkText text-claude-text">
                 {i18nService.t('coworkMemoryTitle')}
               </div>
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={coworkMemoryEnabled}
-                  onChange={(event) => setCoworkMemoryEnabled(event.target.checked)}
-                  className="mt-1"
-                />
-                <span>
-                  <span className="block text-sm dark:text-claude-darkText text-claude-text">
-                    {i18nService.t('coworkMemoryEnabled')}
-                  </span>
-                  <span className="block text-xs dark:text-claude-darkTextSecondary text-claude-textSecondary">
-                    {i18nService.t('coworkMemoryEnabledHint')}
-                  </span>
-                </span>
-              </label>
+              {/* Memory toggle hidden – always enabled by default */}
               <div className="mt-2 text-xs dark:text-claude-darkTextSecondary text-claude-textSecondary">
                 <span className="font-medium">{i18nService.t('coworkMemoryFilePath')}:</span>{' '}
                 <span className="break-all font-mono opacity-80">

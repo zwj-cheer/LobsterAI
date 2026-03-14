@@ -351,6 +351,45 @@ export function migrateSqliteToMemoryMd(
 }
 
 // ---------------------------------------------------------------------------
+// Bootstrap file management (IDENTITY.md, USER.md, SOUL.md)
+// ---------------------------------------------------------------------------
+
+const BOOTSTRAP_ALLOWLIST = new Set(['IDENTITY.md', 'USER.md', 'SOUL.md']);
+
+function validateBootstrapFilename(filename: string): void {
+  if (!BOOTSTRAP_ALLOWLIST.has(filename)) {
+    throw new Error(`Invalid bootstrap filename: ${filename}. Allowed: ${[...BOOTSTRAP_ALLOWLIST].join(', ')}`);
+  }
+}
+
+/**
+ * Resolve the path to a bootstrap file in the workspace directory.
+ */
+export function resolveBootstrapFilePath(workingDirectory: string | undefined, filename: string): string {
+  validateBootstrapFilename(filename);
+  const dir = (workingDirectory || '').trim();
+  return path.join(dir || DEFAULT_OPENCLAW_WORKSPACE, filename);
+}
+
+/**
+ * Read a bootstrap file's content. Returns empty string if file doesn't exist.
+ */
+export function readBootstrapFile(workingDirectory: string | undefined, filename: string): string {
+  const filePath = resolveBootstrapFilePath(workingDirectory, filename);
+  return readFileOrEmpty(filePath);
+}
+
+/**
+ * Write content to a bootstrap file, creating the directory if needed.
+ */
+export function writeBootstrapFile(workingDirectory: string | undefined, filename: string, content: string): void {
+  const filePath = resolveBootstrapFilePath(workingDirectory, filename);
+  ensureDir(filePath);
+  fs.writeFileSync(filePath, content, 'utf8');
+  console.log(`${TAG} writeBootstrapFile: wrote ${filename} (${content.length} chars) to ${filePath}`);
+}
+
+// ---------------------------------------------------------------------------
 // Workspace change sync
 // ---------------------------------------------------------------------------
 

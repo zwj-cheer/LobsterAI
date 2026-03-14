@@ -35,6 +35,8 @@ import {
   searchMemoryEntries,
   migrateSqliteToMemoryMd,
   syncMemoryFileOnWorkspaceChange,
+  readBootstrapFile,
+  writeBootstrapFile,
 } from './libs/openclawMemoryFile';
 import { OpenClawChannelSessionSync, parseChannelSessionKey, CHANNEL_PLATFORM_MAP } from './libs/openclawChannelSessionSync';
 import { IMGatewayManager, IMPlatform, IMGatewayConfig } from './im';
@@ -2225,6 +2227,31 @@ if (!gotTheLock) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to get memory stats',
+      };
+    }
+  });
+  ipcMain.handle('cowork:bootstrap:read', async (_event, filename: string) => {
+    try {
+      const config = getCoworkStore().getConfig();
+      const content = readBootstrapFile(config.workingDirectory, filename);
+      return { success: true, content };
+    } catch (error) {
+      return {
+        success: false,
+        content: '',
+        error: error instanceof Error ? error.message : 'Failed to read bootstrap file',
+      };
+    }
+  });
+  ipcMain.handle('cowork:bootstrap:write', async (_event, filename: string, content: string) => {
+    try {
+      const config = getCoworkStore().getConfig();
+      writeBootstrapFile(config.workingDirectory, filename, content);
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to write bootstrap file',
       };
     }
   });
