@@ -2217,10 +2217,6 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
         this.gatewayHistoryCountBySession.set(sessionId, 0);
         return;
       }
-      if (!this.isCurrentTurnToken(sessionId, turn.turnToken)) {
-        console.log('[Debug:syncFinal] stale turn token, skipping sync for sessionId:', sessionId, 'turnToken:', turn.turnToken);
-        return;
-      }
       const previousHistoryCountKnown = this.gatewayHistoryCountBySession.has(sessionId);
       const previousHistoryCount = this.gatewayHistoryCountBySession.get(sessionId) ?? 0;
       this.syncSystemMessagesFromHistory(sessionId, history.messages, {
@@ -2261,6 +2257,13 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
       if (isChannel) {
         const latestOnly = this.reCreatedChannelSessionIds.has(sessionId);
         this.syncChannelUserMessages(sessionId, history.messages, latestOnly, turn.sessionKey.includes(':discord:'), turn.sessionKey.includes(':qqbot:'));
+      }
+
+      // Stale turn protection: only skip assistant text alignment (which could overwrite
+      // a newer turn's state). User/system message sync above is idempotent and safe.
+      if (!this.isCurrentTurnToken(sessionId, turn.turnToken)) {
+        console.log('[Debug:syncFinal] stale turn token, skipping assistant text alignment for sessionId:', sessionId, 'turnToken:', turn.turnToken);
+        return;
       }
 
       let canonicalText = '';
