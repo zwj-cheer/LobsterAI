@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, writeFileSync, chmodSync, statSync, readdirSync 
 import { delimiter, dirname, join } from 'path';
 import { buildEnvForConfig, getCurrentApiConfig, resolveCurrentApiConfig } from './claudeSettings';
 import type { OpenAICompatProxyTarget } from './coworkOpenAICompatProxy';
+import { getInternalApiBaseURL } from './coworkOpenAICompatProxy';
 import { coworkLog } from './coworkLogger';
 import { appendPythonRuntimeToEnv } from './pythonRuntime';
 import { isSystemProxyEnabled, resolveSystemProxyUrl } from './systemProxy';
@@ -1320,6 +1321,12 @@ export async function getEnhancedEnv(target: OpenAICompatProxyTarget = 'local'):
     env.LOBSTERAI_ELECTRON_PATH = getElectronNodeRuntimePath().replace(/\\/g, '/');
   } else {
     delete env.LOBSTERAI_ELECTRON_PATH;
+  }
+
+  // Inject internal API base URL for skill scripts (e.g. scheduled-task creation)
+  const internalApiBaseURL = getInternalApiBaseURL();
+  if (internalApiBaseURL) {
+    env.LOBSTERAI_API_BASE_URL = internalApiBaseURL;
   }
 
   // Skip system proxy resolution if proxy env vars already exist

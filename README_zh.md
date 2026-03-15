@@ -271,6 +271,7 @@ LobsterAI 内置 16 种技能，覆盖办公、创作、自动化等多种场景
 | canvas-design | Canvas 绘图设计 | 海报、图表设计 |
 | frontend-design | 前端 UI 设计 | 原型制作、页面设计 |
 | develop-web-game | Web 游戏开发 | 小游戏快速原型 |
+| scheduled-task | 定时任务 | 周期性工作自动执行 |
 | weather | 天气查询 | 天气信息获取 |
 | local-tools | 本地系统工具 | 文件管理、系统操作 |
 | create-plan | 计划编排 | 项目规划、任务分解 |

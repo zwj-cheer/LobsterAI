@@ -269,6 +269,7 @@ LobsterAI ships with 16 built-in skills covering productivity, creative, and aut
 | canvas-design | Canvas drawing and design | Posters, chart design |
 | frontend-design | Frontend UI design | Prototyping, page design |
 | develop-web-game | Web game development | Quick game prototypes |
+| scheduled-task | Scheduled tasks | Periodic automated workflows |
 | weather | Weather queries | Weather information |
 | local-tools | Local system tools | File management, system operations |
 | create-plan | Plan authoring | Project planning, task breakdown |
