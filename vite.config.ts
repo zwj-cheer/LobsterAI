@@ -74,7 +74,7 @@ export default defineConfig({
       port: devPort,
     },
     watch: {
-      usePolling: true,
+      usePolling: false,
     },
   },
   optimizeDeps: {
