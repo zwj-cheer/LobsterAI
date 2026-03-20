@@ -375,6 +375,9 @@ const SkillsManager: React.FC = () => {
               ref={addSkillMenuRef}
               className="absolute right-0 mt-2 w-72 rounded-xl border dark:border-claude-darkBorder border-claude-border dark:bg-claude-darkSurface bg-claude-surface shadow-lg z-50 overflow-hidden"
             >
+              <p className="px-3 py-2 text-[11px] text-orange-600 dark:text-orange-400 border-b dark:border-claude-darkBorder border-claude-border">
+                {i18nService.t('addSkillSecurityTip')}
+              </p>
               <button
                 type="button"
                 onClick={handleUploadSkillZip}
